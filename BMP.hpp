@@ -40,11 +40,11 @@ struct BitMapInfoHeader{
 TColor** image;             // Изображение, записанное по строкам слева направо и снизу вверх
 public:
 BMP(const std::string & fileName);
-BMP(const unsigned long _width, const unsigned long _height, const TColor& color);
+BMP(const size_t _width, const size_t _height, const TColor& color);
 ~BMP();
 byte4 getWidth();
 byte4 getHeight();
-void setPixel(const long x, const long y, const TColor & color);
-TColor getPixel(const long x, const long y);
+void setPixel(const size_t x, const size_t y, const TColor & color);
+TColor getPixel(const size_t x, const size_t y);
 void writeToFile(const std::string & fileName);
 };

@@ -41,7 +41,7 @@ BMP::BMP(const std::string & fileName){
     }
 }
 
-BMP::BMP(const unsigned long _width, const unsigned long _height, const TColor& color){
+BMP::BMP(const size_t _width, const size_t _height, const TColor& color){
 
     // Заголовок файла
     bitMapFileHeader.type       = 0x4D42; // Сигнатура BM
@@ -70,9 +70,9 @@ BMP::BMP(const unsigned long _width, const unsigned long _height, const TColor& 
     // Изображение
     for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
         for(size_t i = 0; i < bitMapInfoHeader.width; ++i){
-            image[i][j].B = color.B;
-            image[i][j].G = color.G;
             image[i][j].R = color.R;
+            image[i][j].G = color.G;
+            image[i][j].B = color.B;
             image[i][j].A = color.A;
         }
 
@@ -92,15 +92,15 @@ byte4 BMP::getHeight(){
     return bitMapInfoHeader.height;
 }
 
-void BMP::setPixel(const long x, const long y, const TColor & color){
-    if(x < 0 || x >= bitMapInfoHeader.width)  return;
-    if(y < 0 || y >= bitMapInfoHeader.height) return;
+void BMP::setPixel(const size_t x, const size_t y, const TColor & color){
+    if(x >= bitMapInfoHeader.width)  return;
+    if(y >= bitMapInfoHeader.height) return;
     image[x][y] = color;
 }
 
-TColor BMP::getPixel(const long x, const long y){
-    if(x < 0 || x >= bitMapInfoHeader.width)  return TColor{0, 0, 0};
-    if(y < 0 || y >= bitMapInfoHeader.height) return TColor{0, 0, 0};
+TColor BMP::getPixel(const size_t x, const size_t y){
+    if(x >= bitMapInfoHeader.width)  return TColor{0, 0, 0, 0};
+    if(y >= bitMapInfoHeader.height) return TColor{0, 0, 0, 0};
     return image[x][y];
 }
 
