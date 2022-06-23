@@ -1,5 +1,6 @@
 #include <fstream>
 #include "BMP.hpp"
+#include <iostream>
 
 BMP::BMP(const std::string & fileName){
     std::ifstream fin(fileName, std::ios_base::binary);
@@ -31,14 +32,31 @@ BMP::BMP(const std::string & fileName){
         // Чтение изображения
         for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
             for(size_t i = 0; i < bitMapInfoHeader.width; ++i){
-                fin.read((char*)&image[i][j].A, sizeof(image[i][j].A));
                 fin.read((char*)&image[i][j].B, sizeof(image[i][j].B));
                 fin.read((char*)&image[i][j].G, sizeof(image[i][j].G));
                 fin.read((char*)&image[i][j].R, sizeof(image[i][j].R));
+                fin.read((char*)&image[i][j].A, sizeof(image[i][j].A));
             }
 
         fin.close();
     }
+
+    std::cout << "Type - " << bitMapFileHeader.type << std::endl;
+    std::cout << "Size - " << bitMapFileHeader.size << std::endl;
+    std::cout << "OffsetBits - " << bitMapFileHeader.offsetBits << std::endl;
+
+    std::cout << "Size - " << bitMapInfoHeader.size << std::endl;
+    std::cout << "width - " << bitMapInfoHeader.width << std::endl;
+    std::cout << "height - " << bitMapInfoHeader.height << std::endl;
+    std::cout << "planes - " << bitMapInfoHeader.planes << std::endl;
+    std::cout << "bitCount - " << bitMapInfoHeader.bitCount << std::endl;
+    std::cout << "compression - " << bitMapInfoHeader.compression << std::endl;
+    std::cout << "sizeImage - " << bitMapInfoHeader.sizeImage << std::endl;
+    std::cout << "xPelsPerMeter - " << bitMapInfoHeader.xPelsPerMeter << std::endl;
+    std::cout << "yPelsPerMeter - " << bitMapInfoHeader.yPelsPerMeter << std::endl;
+    std::cout << "colorsUsed - " << bitMapInfoHeader.colorsUsed << std::endl;
+    std::cout << "colorsImportant - " << bitMapInfoHeader.colorsImportant << std::endl;
+
 }
 
 BMP::BMP(const size_t _width, const size_t _height, const TColor& color){
@@ -47,19 +65,19 @@ BMP::BMP(const size_t _width, const size_t _height, const TColor& color){
     bitMapFileHeader.type       = 0x4D42; // Сигнатура BM
     bitMapFileHeader.reserved1  = 0x0; // Всегда 0
     bitMapFileHeader.reserved2  = 0x0; // Всегда 0
-    bitMapFileHeader.offsetBits = 0x36; // Всегда 54
-    bitMapFileHeader.size       = _width * _height * 0x3 + bitMapFileHeader.offsetBits; // 0x3 - кол-во цветов
+    bitMapFileHeader.offsetBits = 0x36 + 84; // Всегда 54
+    bitMapFileHeader.size       = _width * _height * 0x4 + bitMapFileHeader.offsetBits; // 0x3 - кол-во цветов
 
     // Информационный заголовок
-    bitMapInfoHeader.size            = 0x28; // Всегда 40
+    bitMapInfoHeader.size            = 0x28 + 84; // Всегда 40
     bitMapInfoHeader.width           = _width;
     bitMapInfoHeader.height          = _height;
     bitMapInfoHeader.planes          = 0x1; // Всегда 1
-    bitMapInfoHeader.bitCount        = 0x20; // Всегда 24
-    bitMapInfoHeader.compression     = 0x0; // Всегда 0
+    bitMapInfoHeader.bitCount        = 0x20; // Всегда 32
+    bitMapInfoHeader.compression     = 0x3; // Всегда 3
     bitMapInfoHeader.sizeImage       = _width * _height * 0x4; // 0x3 - кол-во цветов
-    bitMapInfoHeader.xPelsPerMeter   = 0xBB8; // Всегда 3000
-    bitMapInfoHeader.yPelsPerMeter   = 0xBB8; // Всегда 3000
+    bitMapInfoHeader.xPelsPerMeter   = 0x0; // Всегда 0
+    bitMapInfoHeader.yPelsPerMeter   = 0x0; // Всегда 0
     bitMapInfoHeader.colorsUsed      = 0x0; // Всегда 0
     bitMapInfoHeader.colorsImportant = 0x0; // Всегда 0
     
@@ -75,6 +93,22 @@ BMP::BMP(const size_t _width, const size_t _height, const TColor& color){
             image[i][j].B = color.B;
             image[i][j].A = color.A;
         }
+
+    std::cout << "Type - " << bitMapFileHeader.type << std::endl;
+    std::cout << "Size - " << bitMapFileHeader.size << std::endl;
+    std::cout << "OffsetBits - " << bitMapFileHeader.offsetBits << std::endl;
+
+    std::cout << "Size - " << bitMapInfoHeader.size << std::endl;
+    std::cout << "width - " << bitMapInfoHeader.width << std::endl;
+    std::cout << "height - " << bitMapInfoHeader.height << std::endl;
+    std::cout << "planes - " << bitMapInfoHeader.planes << std::endl;
+    std::cout << "bitCount - " << bitMapInfoHeader.bitCount << std::endl;
+    std::cout << "compression - " << bitMapInfoHeader.compression << std::endl;
+    std::cout << "sizeImage - " << bitMapInfoHeader.sizeImage << std::endl;
+    std::cout << "xPelsPerMeter - " << bitMapInfoHeader.xPelsPerMeter << std::endl;
+    std::cout << "yPelsPerMeter - " << bitMapInfoHeader.yPelsPerMeter << std::endl;
+    std::cout << "colorsUsed - " << bitMapInfoHeader.colorsUsed << std::endl;
+    std::cout << "colorsImportant - " << bitMapInfoHeader.colorsImportant << std::endl;
 
 }
 
@@ -130,24 +164,13 @@ void BMP::writeToFile(const std::string & fileName){
 
         // Запись изображения
         for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
-            for(size_t i = 0; i < bitMapInfoHeader.width; ++i){
-                fout.write((char*)&image[i][j].A, sizeof(image[i][j].A));
+            for(size_t i = 0; i < bitMapInfoHeader.width; ++i){                
                 fout.write((char*)&image[i][j].B, sizeof(image[i][j].B));
                 fout.write((char*)&image[i][j].G, sizeof(image[i][j].G));
                 fout.write((char*)&image[i][j].R, sizeof(image[i][j].R));
+                fout.write((char*)&image[i][j].A, sizeof(image[i][j].A));
             }
-        byte8 cc = 0xffffffffffffffff;
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
-        fout.write((char*)&cc, sizeof(cc));
+
         fout.close();
     }
 }
