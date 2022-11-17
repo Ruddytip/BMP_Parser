@@ -1,176 +1,202 @@
 #include <fstream>
 #include "BMP.hpp"
+
 #include <iostream>
 
 BMP::BMP(const std::string & fileName){
     std::ifstream fin(fileName, std::ios_base::binary);
-    if (fin.is_open()){
-        // Чтение заголовка файла
-        fin.read((char*)&bitMapFileHeader.type,       sizeof(bitMapFileHeader.type));
-        fin.read((char*)&bitMapFileHeader.size,       sizeof(bitMapFileHeader.size));
-        fin.read((char*)&bitMapFileHeader.reserved1,  sizeof(bitMapFileHeader.reserved1));
-        fin.read((char*)&bitMapFileHeader.reserved2,  sizeof(bitMapFileHeader.reserved2));
-        fin.read((char*)&bitMapFileHeader.offsetBits, sizeof(bitMapFileHeader.offsetBits));
+    if (!fin.is_open()) return;
 
-        // Чтение информационного заголовка
-        fin.read((char*)&bitMapInfoHeader.size,            sizeof(bitMapInfoHeader.size));
-        fin.read((char*)&bitMapInfoHeader.width,           sizeof(bitMapInfoHeader.width));
-        fin.read((char*)&bitMapInfoHeader.height,          sizeof(bitMapInfoHeader.height));
-        fin.read((char*)&bitMapInfoHeader.planes,          sizeof(bitMapInfoHeader.planes));
-        fin.read((char*)&bitMapInfoHeader.bitCount,        sizeof(bitMapInfoHeader.bitCount));
-        fin.read((char*)&bitMapInfoHeader.compression,     sizeof(bitMapInfoHeader.compression));
-        fin.read((char*)&bitMapInfoHeader.sizeImage,       sizeof(bitMapInfoHeader.sizeImage));
-        fin.read((char*)&bitMapInfoHeader.xPelsPerMeter,   sizeof(bitMapInfoHeader.xPelsPerMeter));
-        fin.read((char*)&bitMapInfoHeader.yPelsPerMeter,   sizeof(bitMapInfoHeader.yPelsPerMeter));
-        fin.read((char*)&bitMapInfoHeader.colorsUsed,      sizeof(bitMapInfoHeader.colorsUsed));
-        fin.read((char*)&bitMapInfoHeader.colorsImportant, sizeof(bitMapInfoHeader.colorsImportant));
-        
-        image = new TColor*[bitMapInfoHeader.width];
-        for(size_t i = 0; i < bitMapInfoHeader.width; ++i)
-            image[i] = new TColor[bitMapInfoHeader.height];
+    // Чтение заголовка файла
+    fin.read(reinterpret_cast<char*>(&fileH.type),       sizeof(fileH.type));
+    fin.read(reinterpret_cast<char*>(&fileH.size),       sizeof(fileH.size));
+    fin.read(reinterpret_cast<char*>(&fileH.reserved1),  sizeof(fileH.reserved1));
+    fin.read(reinterpret_cast<char*>(&fileH.reserved2),  sizeof(fileH.reserved2));
+    fin.read(reinterpret_cast<char*>(&fileH.offsetBits), sizeof(fileH.offsetBits));
 
-        // Чтение изображения
-        for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
-            for(size_t i = 0; i < bitMapInfoHeader.width; ++i){
-                fin.read((char*)&image[i][j].B, sizeof(image[i][j].B));
-                fin.read((char*)&image[i][j].G, sizeof(image[i][j].G));
-                fin.read((char*)&image[i][j].R, sizeof(image[i][j].R));
-                fin.read((char*)&image[i][j].A, sizeof(image[i][j].A));
-            }
+    // Чтение информационного заголовка
+    fin.read(reinterpret_cast<char*>(&infoH.size), sizeof(infoH.size));
 
-        fin.close();
+    // Определение версии вайла
+    // 40 - 3 версия, 108 - 4 версия, 124 - 5 версия
+    if(infoH.size == 40 || infoH.size == 108 || infoH.size == 124){
+        fin.read(reinterpret_cast<char*>(&infoH.width),           sizeof(infoH.width));
+        fin.read(reinterpret_cast<char*>(&infoH.height),          sizeof(infoH.height));
+        fin.read(reinterpret_cast<char*>(&infoH.planes),          sizeof(infoH.planes));
+        fin.read(reinterpret_cast<char*>(&infoH.bitCount),        sizeof(infoH.bitCount));
+        fin.read(reinterpret_cast<char*>(&infoH.compression),     sizeof(infoH.compression));
+        fin.read(reinterpret_cast<char*>(&infoH.sizeImage),       sizeof(infoH.sizeImage));
+        fin.read(reinterpret_cast<char*>(&infoH.xPelsPerMeter),   sizeof(infoH.xPelsPerMeter));
+        fin.read(reinterpret_cast<char*>(&infoH.yPelsPerMeter),   sizeof(infoH.yPelsPerMeter));
+        fin.read(reinterpret_cast<char*>(&infoH.colorsUsed),      sizeof(infoH.colorsUsed));
+        fin.read(reinterpret_cast<char*>(&infoH.colorsImportant), sizeof(infoH.colorsImportant));
+    }else{
+        return;
     }
 
-    std::cout << "Type - " << bitMapFileHeader.type << std::endl;
-    std::cout << "Size - " << bitMapFileHeader.size << std::endl;
-    std::cout << "OffsetBits - " << bitMapFileHeader.offsetBits << std::endl;
+    // Чтение полей 4 версии
+    if(infoH.size == 108 || infoH.size == 124){
+        fin.read(reinterpret_cast<char*>(&infoH.redMask),    sizeof(infoH.redMask));
+        fin.read(reinterpret_cast<char*>(&infoH.greenMask),  sizeof(infoH.greenMask));
+        fin.read(reinterpret_cast<char*>(&infoH.blueMask),   sizeof(infoH.blueMask));
+        fin.read(reinterpret_cast<char*>(&infoH.alphaMask),  sizeof(infoH.alphaMask));
+        fin.read(reinterpret_cast<char*>(&infoH.csType),     sizeof(infoH.csType));
+        fin.read(reinterpret_cast<char*>(&infoH.endpoints),  sizeof(infoH.endpoints));
+        fin.read(reinterpret_cast<char*>(&infoH.gammaRed),   sizeof(infoH.gammaRed));
+        fin.read(reinterpret_cast<char*>(&infoH.gammaGreen), sizeof(infoH.gammaGreen));
+        fin.read(reinterpret_cast<char*>(&infoH.gammaBlue),  sizeof(infoH.gammaBlue));
+    }
 
-    std::cout << "Size - " << bitMapInfoHeader.size << std::endl;
-    std::cout << "width - " << bitMapInfoHeader.width << std::endl;
-    std::cout << "height - " << bitMapInfoHeader.height << std::endl;
-    std::cout << "planes - " << bitMapInfoHeader.planes << std::endl;
-    std::cout << "bitCount - " << bitMapInfoHeader.bitCount << std::endl;
-    std::cout << "compression - " << bitMapInfoHeader.compression << std::endl;
-    std::cout << "sizeImage - " << bitMapInfoHeader.sizeImage << std::endl;
-    std::cout << "xPelsPerMeter - " << bitMapInfoHeader.xPelsPerMeter << std::endl;
-    std::cout << "yPelsPerMeter - " << bitMapInfoHeader.yPelsPerMeter << std::endl;
-    std::cout << "colorsUsed - " << bitMapInfoHeader.colorsUsed << std::endl;
-    std::cout << "colorsImportant - " << bitMapInfoHeader.colorsImportant << std::endl;
+    // Чтение полей 5 версии
+    if(infoH.size == 124){
+        fin.read(reinterpret_cast<char*>(&infoH.intent),      sizeof(infoH.intent));
+        fin.read(reinterpret_cast<char*>(&infoH.profileData), sizeof(infoH.profileData));
+        fin.read(reinterpret_cast<char*>(&infoH.profileSize), sizeof(infoH.profileSize));
+        fin.read(reinterpret_cast<char*>(&infoH.reserved),    sizeof(infoH.reserved));
+    }
+    
+    image = new Canvas(infoH.width, infoH.height, Color(0, 0, 0, 0));
 
+    // Чтение изображения
+
+    if(infoH.bitCount == 32){
+        for(unsigned int j = 0; j < infoH.height; ++j)
+            for(unsigned int i = 0; i < infoH.width; ++i){
+                byte1 red, green, blue, al;
+                fin.read(reinterpret_cast<char*>(&blue),  sizeof(blue));
+                fin.read(reinterpret_cast<char*>(&green), sizeof(green));
+                fin.read(reinterpret_cast<char*>(&red),   sizeof(red)); 
+                fin.read(reinterpret_cast<char*>(&al),    sizeof(al));                
+                image->setPixel(i, j, Color(red, green, blue, al));
+            }
+    }
+
+    if(infoH.bitCount == 24){
+        for(unsigned int j = 0; j < infoH.height; ++j)
+            for(unsigned int i = 0; i < infoH.width; ++i){
+                byte1 red, green, blue;
+                fin.read(reinterpret_cast<char*>(&blue),  sizeof(blue));
+                fin.read(reinterpret_cast<char*>(&green), sizeof(green));
+                fin.read(reinterpret_cast<char*>(&red),   sizeof(red));                
+                image->setPixel(i, j, Color(red, green, blue, 255));
+            }
+        infoH.bitCount = 32;
+    }
+
+    fin.close();
 }
 
-BMP::BMP(const size_t _width, const size_t _height, const TColor& color){
-
+BMP::BMP(const byte4 _width, const byte4 _height, const Color& color){
     // Заголовок файла
-    bitMapFileHeader.type       = 0x4D42; // Сигнатура BM
-    bitMapFileHeader.reserved1  = 0x0; // Всегда 0
-    bitMapFileHeader.reserved2  = 0x0; // Всегда 0
-    bitMapFileHeader.offsetBits = 0x36 + 84; // Всегда 54
-    bitMapFileHeader.size       = _width * _height * 0x4 + bitMapFileHeader.offsetBits; // 0x3 - кол-во цветов
+    fileH.type       = 0x4D42; // Сигнатура BM
+    fileH.reserved1  = 0x0; // Всегда 0
+    fileH.reserved2  = 0x0; // Всегда 0
+    fileH.offsetBits = 0x8A; // Всегда 138
 
     // Информационный заголовок
-    bitMapInfoHeader.size            = 0x28 + 84; // Всегда 40
-    bitMapInfoHeader.width           = _width;
-    bitMapInfoHeader.height          = _height;
-    bitMapInfoHeader.planes          = 0x1; // Всегда 1
-    bitMapInfoHeader.bitCount        = 0x20; // Всегда 32
-    bitMapInfoHeader.compression     = 0x3; // Всегда 3
-    bitMapInfoHeader.sizeImage       = _width * _height * 0x4; // 0x3 - кол-во цветов
-    bitMapInfoHeader.xPelsPerMeter   = 0x0; // Всегда 0
-    bitMapInfoHeader.yPelsPerMeter   = 0x0; // Всегда 0
-    bitMapInfoHeader.colorsUsed      = 0x0; // Всегда 0
-    bitMapInfoHeader.colorsImportant = 0x0; // Всегда 0
+    // 3 версия
+    infoH.size            = 0x7C; // Всегда 124
+    infoH.width           = _width;
+    infoH.height          = _height;
+    infoH.planes          = 0x1; // Всегда 1
+    infoH.bitCount        = 0x20; // Всегда 32
+    infoH.compression     = 0x3; // Всегда 3
+    infoH.sizeImage       = _width * _height * 0x4; // 0x4 - кол-во цветов
+    infoH.xPelsPerMeter   = 0xBB8; // Всегда 3000
+    infoH.yPelsPerMeter   = 0xBB8; // Всегда 3000
+    infoH.colorsUsed      = 0x0; // Всегда 0
+    infoH.colorsImportant = 0x0; // Всегда 0
+    // Все переменные ниже являются константами
+    // 4 версия
+    infoH.redMask   = 0x00FF0000;
+    infoH.greenMask = 0x0000FF00;
+    infoH.blueMask  = 0x000000FF;
+    infoH.alphaMask = 0xFF000000;
+    infoH.csType    = 0x73524742;
+    infoH.endpoints.xyzRed   = {0x28F5C28F, 0x151EB852, 0x01EB851F};
+    infoH.endpoints.xyzGreen = {0x13333333, 0x26666666, 0x06666666};
+    infoH.endpoints.xyzBlue  = {0x0999999A, 0x03D70A3D, 0x328F5C29};
+    infoH.gammaRed   = 0x0002199A;
+    infoH.gammaGreen = 0x0002199A;
+    infoH.gammaBlue  = 0x0002199A;
+    // 5 версия
+    infoH.intent      = 0x4;
+    infoH.profileData = 0x0;
+    infoH.profileSize = 0x0;
+    infoH.reserved    = 0x0;
     
-    image = new TColor*[bitMapInfoHeader.width];
-    for(size_t i = 0; i < bitMapInfoHeader.width; ++i)
-        image[i] = new TColor[bitMapInfoHeader.height];
+    fileH.size = infoH.sizeImage + fileH.offsetBits;
 
     // Изображение
-    for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
-        for(size_t i = 0; i < bitMapInfoHeader.width; ++i){
-            image[i][j].R = color.R;
-            image[i][j].G = color.G;
-            image[i][j].B = color.B;
-            image[i][j].A = color.A;
-        }
-
-    std::cout << "Type - " << bitMapFileHeader.type << std::endl;
-    std::cout << "Size - " << bitMapFileHeader.size << std::endl;
-    std::cout << "OffsetBits - " << bitMapFileHeader.offsetBits << std::endl;
-
-    std::cout << "Size - " << bitMapInfoHeader.size << std::endl;
-    std::cout << "width - " << bitMapInfoHeader.width << std::endl;
-    std::cout << "height - " << bitMapInfoHeader.height << std::endl;
-    std::cout << "planes - " << bitMapInfoHeader.planes << std::endl;
-    std::cout << "bitCount - " << bitMapInfoHeader.bitCount << std::endl;
-    std::cout << "compression - " << bitMapInfoHeader.compression << std::endl;
-    std::cout << "sizeImage - " << bitMapInfoHeader.sizeImage << std::endl;
-    std::cout << "xPelsPerMeter - " << bitMapInfoHeader.xPelsPerMeter << std::endl;
-    std::cout << "yPelsPerMeter - " << bitMapInfoHeader.yPelsPerMeter << std::endl;
-    std::cout << "colorsUsed - " << bitMapInfoHeader.colorsUsed << std::endl;
-    std::cout << "colorsImportant - " << bitMapInfoHeader.colorsImportant << std::endl;
+    image = new Canvas(infoH.width, infoH.height, color);
 
 }
 
 BMP::~BMP(){
-    for(size_t i = 0; i < bitMapInfoHeader.width; ++i)
-        delete[] image[i];
-    delete[] image;
-}
-
-byte4 BMP::getWidth(){
-    return bitMapInfoHeader.width;
-}
-
-byte4 BMP::getHeight(){
-    return bitMapInfoHeader.height;
-}
-
-void BMP::setPixel(const size_t x, const size_t y, const TColor & color){
-    if(x >= bitMapInfoHeader.width)  return;
-    if(y >= bitMapInfoHeader.height) return;
-    image[x][y] = color;
-}
-
-TColor BMP::getPixel(const size_t x, const size_t y){
-    if(x >= bitMapInfoHeader.width)  return TColor{0, 0, 0, 0};
-    if(y >= bitMapInfoHeader.height) return TColor{0, 0, 0, 0};
-    return image[x][y];
+    delete image;
 }
 
 void BMP::writeToFile(const std::string & fileName){
     std::ofstream fout(fileName, std::ios_base::binary | std::ios_base::trunc);
-    if(fout.is_open()){
+    if(!fout.is_open()) return;
 
-        // Запись заголовка файла
-        fout.write((char*)&bitMapFileHeader.type,       sizeof(bitMapFileHeader.type));
-        fout.write((char*)&bitMapFileHeader.size,       sizeof(bitMapFileHeader.size));
-        fout.write((char*)&bitMapFileHeader.reserved1,  sizeof(bitMapFileHeader.reserved1));
-        fout.write((char*)&bitMapFileHeader.reserved2,  sizeof(bitMapFileHeader.reserved2));
-        fout.write((char*)&bitMapFileHeader.offsetBits, sizeof(bitMapFileHeader.offsetBits));
+    // Запись заголовка файла
+    fout.write(reinterpret_cast<char*>(&fileH.type),       sizeof(fileH.type));
+    fout.write(reinterpret_cast<char*>(&fileH.size),       sizeof(fileH.size));
+    fout.write(reinterpret_cast<char*>(&fileH.reserved1),  sizeof(fileH.reserved1));
+    fout.write(reinterpret_cast<char*>(&fileH.reserved2),  sizeof(fileH.reserved2));
+    fout.write(reinterpret_cast<char*>(&fileH.offsetBits), sizeof(fileH.offsetBits));
 
-        // Запись информационного заголовка
-        fout.write((char*)&bitMapInfoHeader.size,            sizeof(bitMapInfoHeader.size));
-        fout.write((char*)&bitMapInfoHeader.width,           sizeof(bitMapInfoHeader.width));
-        fout.write((char*)&bitMapInfoHeader.height,          sizeof(bitMapInfoHeader.height));
-        fout.write((char*)&bitMapInfoHeader.planes,          sizeof(bitMapInfoHeader.planes));
-        fout.write((char*)&bitMapInfoHeader.bitCount,        sizeof(bitMapInfoHeader.bitCount));
-        fout.write((char*)&bitMapInfoHeader.compression,     sizeof(bitMapInfoHeader.compression));
-        fout.write((char*)&bitMapInfoHeader.sizeImage,       sizeof(bitMapInfoHeader.sizeImage));
-        fout.write((char*)&bitMapInfoHeader.xPelsPerMeter,   sizeof(bitMapInfoHeader.xPelsPerMeter));
-        fout.write((char*)&bitMapInfoHeader.yPelsPerMeter,   sizeof(bitMapInfoHeader.yPelsPerMeter));
-        fout.write((char*)&bitMapInfoHeader.colorsUsed,      sizeof(bitMapInfoHeader.colorsUsed));
-        fout.write((char*)&bitMapInfoHeader.colorsImportant, sizeof(bitMapInfoHeader.colorsImportant));
+    // Запись информационного заголовка
+    fout.write(reinterpret_cast<char*>(&infoH.size), sizeof(infoH.size));
 
-        // Запись изображения
-        for(size_t j = 0; j < bitMapInfoHeader.height; ++j)
-            for(size_t i = 0; i < bitMapInfoHeader.width; ++i){                
-                fout.write((char*)&image[i][j].B, sizeof(image[i][j].B));
-                fout.write((char*)&image[i][j].G, sizeof(image[i][j].G));
-                fout.write((char*)&image[i][j].R, sizeof(image[i][j].R));
-                fout.write((char*)&image[i][j].A, sizeof(image[i][j].A));
-            }
+    // Запись полей 3 версии
+    fout.write(reinterpret_cast<char*>(&infoH.width),           sizeof(infoH.width));
+    fout.write(reinterpret_cast<char*>(&infoH.height),          sizeof(infoH.height));
+    fout.write(reinterpret_cast<char*>(&infoH.planes),          sizeof(infoH.planes));
+    fout.write(reinterpret_cast<char*>(&infoH.bitCount),        sizeof(infoH.bitCount));
+    fout.write(reinterpret_cast<char*>(&infoH.compression),     sizeof(infoH.compression));
+    fout.write(reinterpret_cast<char*>(&infoH.sizeImage),       sizeof(infoH.sizeImage));
+    fout.write(reinterpret_cast<char*>(&infoH.xPelsPerMeter),   sizeof(infoH.xPelsPerMeter));
+    fout.write(reinterpret_cast<char*>(&infoH.yPelsPerMeter),   sizeof(infoH.yPelsPerMeter));
+    fout.write(reinterpret_cast<char*>(&infoH.colorsUsed),      sizeof(infoH.colorsUsed));
+    fout.write(reinterpret_cast<char*>(&infoH.colorsImportant), sizeof(infoH.colorsImportant));
+    
+    // Запись полей 4 версии
+    fout.write(reinterpret_cast<char*>(&infoH.redMask),    sizeof(infoH.redMask));
+    fout.write(reinterpret_cast<char*>(&infoH.greenMask),  sizeof(infoH.greenMask));
+    fout.write(reinterpret_cast<char*>(&infoH.blueMask),   sizeof(infoH.blueMask));
+    fout.write(reinterpret_cast<char*>(&infoH.alphaMask),  sizeof(infoH.alphaMask));
+    fout.write(reinterpret_cast<char*>(&infoH.csType),     sizeof(infoH.csType));
+    fout.write(reinterpret_cast<char*>(&infoH.endpoints),  sizeof(infoH.endpoints));
+    fout.write(reinterpret_cast<char*>(&infoH.gammaRed),   sizeof(infoH.gammaRed));
+    fout.write(reinterpret_cast<char*>(&infoH.gammaGreen), sizeof(infoH.gammaGreen));
+    fout.write(reinterpret_cast<char*>(&infoH.gammaBlue),  sizeof(infoH.gammaBlue));
 
-        fout.close();
+    // Запись полей 5 версии
+    fout.write(reinterpret_cast<char*>(&infoH.intent),      sizeof(infoH.intent));
+    fout.write(reinterpret_cast<char*>(&infoH.profileData), sizeof(infoH.profileData));
+    fout.write(reinterpret_cast<char*>(&infoH.profileSize), sizeof(infoH.profileSize));
+    fout.write(reinterpret_cast<char*>(&infoH.reserved),    sizeof(infoH.reserved));
+
+    // Запись изображения
+    for (unsigned int j = 0; j < infoH.height; ++j){
+        for (unsigned int i = 0; i < infoH.width; ++i){
+            Color clr = image->getPixel(i, j);
+            fout.write(reinterpret_cast<char*>(&clr.B), sizeof(clr.B));
+            fout.write(reinterpret_cast<char*>(&clr.G), sizeof(clr.G));
+            fout.write(reinterpret_cast<char*>(&clr.R), sizeof(clr.R));
+            fout.write(reinterpret_cast<char*>(&clr.A), sizeof(clr.A));
+        }
     }
+
+    fout.close();
+}
+
+void BMP::setImage(Canvas* _image){
+    image = _image;
+}
+
+Canvas* BMP::getImage(){
+    return image;
 }
