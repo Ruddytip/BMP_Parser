@@ -1,20 +1,23 @@
 #include "BMP.hpp"
 
 int main(){
-    // BMP test("images/cubes.bmp");
-    // BMP test("images/rick.bmp");
-    // BMP test("images/sky.bmp");
-    // BMP test("images/dog.bmp");
-    BMP test(1000, 1000, Color(255, 0, 0, 100));
+    // BMP out("images/cubes.bmp");
+    // BMP out("images/rick.bmp");
+    // BMP out("images/sky.bmp");
+    // BMP out("images/dog.bmp");
+    // BMP out(100, 100, Color(255, 0, 0, 100));
 
-    Canvas* map = test.getImage();
+    Canvas image(1000, 1000, Color(100, 200, 100, 255));
+    // Canvas image = out.getCanvas();
 
-    for(unsigned int i = 0; i < 500; ++i){
-        for(unsigned int j = 0; j < 500; ++j){
-            map->setPixel(i, j, Color(i * 0.5, j * 0.5, 0, i * 0.5));
+    for(unsigned int i = 0; i < 100; ++i){
+        for(unsigned int j = 0; j < 100; ++j){
+            image.setPixel(i, j, Color(i * 0.5, j * 0.5, 0, i * 2.5));
         }
     }
 
-    test.writeToFile("images/test.bmp");
+    // out.setCanvas(image);
+    BMP out(image);
+    out.writeToFile("images/test.bmp");
     return 0;
 }

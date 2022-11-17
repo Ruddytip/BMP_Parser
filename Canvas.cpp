@@ -38,3 +38,11 @@ void Canvas::clear(const Color& color) const{
 Color** Canvas::getPTR(){
     return canvas;
 }
+
+byte4 Canvas::getWidth() const{
+    return width;
+}
+
+byte4 Canvas::getHeight() const{
+    return height;
+}

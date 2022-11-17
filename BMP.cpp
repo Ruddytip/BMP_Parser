@@ -1,8 +1,6 @@
 #include <fstream>
 #include "BMP.hpp"
 
-#include <iostream>
-
 BMP::BMP(const std::string & fileName){
     std::ifstream fin(fileName, std::ios_base::binary);
     if (!fin.is_open()) return;
@@ -55,7 +53,7 @@ BMP::BMP(const std::string & fileName){
         fin.read(reinterpret_cast<char*>(&infoH.reserved),    sizeof(infoH.reserved));
     }
     
-    image = new Canvas(infoH.width, infoH.height, Color(0, 0, 0, 0));
+    canvas = new Canvas(infoH.width, infoH.height, Color(0, 0, 0, 0));
 
     // Чтение изображения
 
@@ -67,7 +65,7 @@ BMP::BMP(const std::string & fileName){
                 fin.read(reinterpret_cast<char*>(&green), sizeof(green));
                 fin.read(reinterpret_cast<char*>(&red),   sizeof(red)); 
                 fin.read(reinterpret_cast<char*>(&al),    sizeof(al));                
-                image->setPixel(i, j, Color(red, green, blue, al));
+                canvas->setPixel(i, j, Color(red, green, blue, al));
             }
     }
 
@@ -78,7 +76,7 @@ BMP::BMP(const std::string & fileName){
                 fin.read(reinterpret_cast<char*>(&blue),  sizeof(blue));
                 fin.read(reinterpret_cast<char*>(&green), sizeof(green));
                 fin.read(reinterpret_cast<char*>(&red),   sizeof(red));                
-                image->setPixel(i, j, Color(red, green, blue, 255));
+                canvas->setPixel(i, j, Color(red, green, blue, 255));
             }
         infoH.bitCount = 32;
     }
@@ -128,12 +126,17 @@ BMP::BMP(const byte4 _width, const byte4 _height, const Color& color){
     fileH.size = infoH.sizeImage + fileH.offsetBits;
 
     // Изображение
-    image = new Canvas(infoH.width, infoH.height, color);
+    canvas = new Canvas(infoH.width, infoH.height, color);
 
 }
 
+BMP::BMP(const Canvas& _canvas):
+BMP(_canvas.getWidth(), _canvas.getHeight(), Color(0, 0, 0, 0)){
+    setCanvas(_canvas);
+}
+
 BMP::~BMP(){
-    delete image;
+    delete canvas;
 }
 
 void BMP::writeToFile(const std::string & fileName){
@@ -182,7 +185,7 @@ void BMP::writeToFile(const std::string & fileName){
     // Запись изображения
     for (unsigned int j = 0; j < infoH.height; ++j){
         for (unsigned int i = 0; i < infoH.width; ++i){
-            Color clr = image->getPixel(i, j);
+            Color clr = canvas->getPixel(i, j);
             fout.write(reinterpret_cast<char*>(&clr.B), sizeof(clr.B));
             fout.write(reinterpret_cast<char*>(&clr.G), sizeof(clr.G));
             fout.write(reinterpret_cast<char*>(&clr.R), sizeof(clr.R));
@@ -193,10 +196,16 @@ void BMP::writeToFile(const std::string & fileName){
     fout.close();
 }
 
-void BMP::setImage(Canvas* _image){
-    image = _image;
+void BMP::setCanvas(const Canvas& _canvas){
+    for(int j = 0; j < infoH.height; ++j)
+        for(int i = 0; i < infoH.width; ++i)
+            canvas->setPixel(i, j, _canvas.getPixel(i, j));
 }
 
-Canvas* BMP::getImage(){
-    return image;
+Canvas BMP::getCanvas() const{
+    Canvas out(canvas->getWidth(), canvas->getHeight(), Color(0, 0, 0, 0));
+    for(int j = 0; j < infoH.height; ++j)
+        for(int i = 0; i < infoH.width; ++i)
+            out.setPixel(i, j, canvas->getPixel(i, j));
+    return out;
 }

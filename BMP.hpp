@@ -53,12 +53,13 @@ private:
         byte4 profileSize; // Если в BMP непосредственно включается цветовой профиль, то здесь указывается его размер в байтах
         byte4 reserved; // Зарезервировано и должно быть обнулено
     } infoH;
-    Canvas* image;               // Изображение, записанное по строкам слева направо и снизу вверх
+    Canvas* canvas;               // Изображение, записанное по строкам слева направо и снизу вверх
 public:
     BMP(const std::string & fileName);
     BMP(const byte4 _width, const byte4 _height, const Color& color);
+    BMP(const Canvas& _canvas);
     ~BMP();
     void writeToFile(const std::string & fileName);
-    void setImage(Canvas* _image);
-    Canvas* getImage();
+    void setCanvas(const Canvas& _canvas);
+    Canvas getCanvas() const;
 };

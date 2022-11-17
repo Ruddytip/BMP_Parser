@@ -27,4 +27,6 @@ public:
     Color getPixel(const unsigned int x, const unsigned int y) const;
     void clear(const Color& color) const;
     Color** getPTR();
+    byte4 getWidth() const;
+    byte4 getHeight() const;
 };
